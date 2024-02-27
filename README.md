@@ -21,3 +21,31 @@ In our use cases, the kubernetes is used for production, the docker-compose is f
 1. Beam Staging Artifacts: Although Beam supports using S3 as staging artifacts. However, it seems like if we are using x-language support, the job server will not honor that settings. As a result, this example set up another PVC for job manager and task manager.
 
 2. Separate Python Harness SDK Harness to its own container.  It seems hard to control and evaluate the python usage, therefore we decide to separate the python harness so that we can just configure the container resources to control the memory assigned to python code.
+
+# Docker Compose Example 
+1. first start the cluster: 
+```
+docker-compose -f docker-compose.yaml up [-d]
+```
+2.  Trigger the app
+```
+python example.py \
+  --topic test --group test-group --bootstrap-server host.docker.internal:9092 \
+  --job_endpoint host.docker.internal:8099 \
+  --artifact_endpoint host.docker.internal:8098 \
+  --environment_type=EXTERNAL \
+  --environment_config=host.docker.internal:50000
+```
+
+# Kubernetes Example 
+1. Ensure you have installed the [flink operator](https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-release-1.7/docs/try-flink-kubernetes-operator/quick-start/)
+
+2. If you're not using Docker desktop, make sure you build the image and upload the image to the repo that your k8s can access. 
+```
+docker build --platform linux/amd64 -t example_image:v1.0 docker/
+```
+3. If you've updated the docker image location, make sure you update the `image` in k8s.yaml before apply it
+```
+kubectl apply -f k8s.yaml
+```
+ 
