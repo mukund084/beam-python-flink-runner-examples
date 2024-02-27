@@ -20,6 +20,4 @@ In our use cases, the kubernetes is used for production, the docker-compose is f
 
 1. Beam Staging Artifacts: Although Beam supports using S3 as staging artifacts. However, it seems like if we are using x-language support, the job server will not honor that settings. As a result, this example set up another PVC for job manager and task manager.
 
-2. Minimum docker image size: In our use cases, the docker image is used in multiple areas, and thus it would be a waste of spaces if we directly put all the flink + beam dependencies in the same docker image. As a result, we are using the init container to copy the pre-built depenedencies into the current system.
-
-3. Separate Python Harness SDK Harness to its own container.  It seems hard to control and evaluate the python usage, therefore we decide to separate the python harness so that we can just configure the container resources to control the memory assigned to python code.
+2. Separate Python Harness SDK Harness to its own container.  It seems hard to control and evaluate the python usage, therefore we decide to separate the python harness so that we can just configure the container resources to control the memory assigned to python code.
