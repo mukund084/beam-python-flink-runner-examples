@@ -1,0 +1,128 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: beam-volume
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  hostPath:
+    path: /tmp/beam-volume
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flink-staging
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  labels:
+    app: example-app
+  name: example-app
+spec:
+  image: example_image:v1.0
+  imagePullPolicy: Always
+  flinkVersion: v1_14
+  flinkConfiguration:
+    kubernetes.entry.path: "/shared/docker-entrypoint.sh"
+    taskmanager.numberOfTaskSlots: "4"
+    state.backend.fs.checkpointdir: file:///checkpoints/flink/checkpoints
+    fs.s3a.aws.credentials.provider: com.amazonaws.auth.WebIdentityTokenCredentialsProvider
+    jobmanager.memory.jvm-metaspace.size: 512M
+    metrics.reporter.prom.class: org.apache.flink.metrics.prometheus.PrometheusReporter
+    metrics.reporter.prom.filterLabelValueCharacters: "false"
+    metrics.reporter.prom.port: "9249"
+    web.cancel.enable: "false"
+    execution.checkpointing.timeout: 5min
+  serviceAccount: flink
+  jobManager:
+    replicas: 1
+    resource:
+      memory: 2Gb
+      cpu: 1
+    podTemplate:
+      spec:
+        containers:
+        - name: flink-main-container
+          env:
+          - name: FLINK_COMPONENT
+            value: jobmanager
+  taskManager:
+    resource:
+      memory: 4Gb
+      cpu: 1
+    podTemplate:
+      spec:
+        containers:
+        - name: flink-main-container
+          env:
+            - name: FLINK_JOB_NAME
+              value: example-app
+        - name: python-worker-harness
+          image: example_image:v1.0
+          imagePullPolicy: Always
+          command: ['/docker-entrypoint.sh']
+          args: ["/opt/apache/beam/boot", "--worker_pool"]
+          env:
+            - name: JAVA_HOME
+              value: /usr/lib/jvm/java-8-openjdk-amd64
+            - name: FLINK_JOB_NAME
+              value: example-app
+          volumeMounts:
+            - mountPath: /tmp/beam-artifact-staging
+              name: flink-staging
+          ports:
+          - containerPort: 50000
+            name: harness-port
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 1
+            limits:
+              memory: 1Gi
+              cpu: 1
+  podTemplate:
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        app: example-app
+    spec:
+      containers:
+      - name: flink-main-container
+        env:
+          - name: FLINK_HOME
+            value: /opt/flink
+          - name: JAVA_HOME
+            value: /usr/lib/jvm/java-8-openjdk-amd64
+          - name: FLINK_JOB_NAME
+            value: example-app
+        volumeMounts:
+          - mountPath: /tmp/beam-artifact-staging
+            name: flink-staging
+      volumes:
+        - name: flink-staging
+          persistentVolumeClaim:
+            claimName: flink-staging
+  job:
+    jarURI: local:///opt/flink/flink-web-upload/beam-runner.jar
+    entryClass: org.apache.beam.runners.flink.FlinkPortableClientEntryPoint
+    args:
+      - "--driver-cmd"
+      - "python example.py --topic test --group test-group --bootstrap-server host.docker.internal:9092 --job_endpoint host.docker.internal:8099 --artifact_endpoint host.docker.internal:8098 --environment_type=EXTERNAL --environment_config=host.docker.internal:50000"
+    parallelism: 4
+    upgradeMode: stateless
+    state: running
+    allowNonRestoredState: true
+---

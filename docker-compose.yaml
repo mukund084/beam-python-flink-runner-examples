@@ -1,0 +1,60 @@
+version: '3'
+services:
+  jobmanager:
+    build: docker
+    image: example_image:v1.0
+    command: ['jobmanager']
+    ports:
+      - "8081:8081"
+    environment:
+      FLINK_PROPERTIES: "jobmanager.rpc.address: jobmanager\nparallelism.default: 1"
+      FLINK_JOB_NAME: 'test'
+    volumes:
+      - artifacts:/tmp/beam-artifact-staging
+  taskmanager:
+    image: example_image:v1.0
+    scale: 1
+    depends_on:
+      - jobmanager
+    command: ['taskmanager']
+    ports:
+      - "8100-8200:8100-8200"
+    environment:
+      FLINK_PROPERTIES: "jobmanager.rpc.address: jobmanager\ntaskmanager.numberOfTaskSlots: 1\nparallelism.default: 1"
+      # Becuase Docker on Mac does not support host network sharing, we need these env vars to communicate with the externally
+      # running python worker. When the Task Manager opens connections for the python woker it will 1) use `host.docker.internal`
+      # instead of `localhost` 2) use ports 8100-8200 in a round-robin fashion.
+      BEAM_WORKER_POOL_IN_DOCKER_VM: 1
+      DOCKER_MAC_CONTAINER: 1
+    volumes:
+      - artifacts:/tmp/beam-artifact-staging
+  beam-jobserver:
+    image: example_image:v1.0
+    entrypoint:
+      - java
+      - -cp
+      - /opt/flink/flink-web-upload/beam-runner.jar
+      - org.apache.beam.runners.flink.FlinkJobServerDriver
+      - --flink-master=jobmanager
+      - --job-host=beam-jobserver
+    ports:
+      - "8097:8097"
+      - "8098:8098"
+      - "8099:8099"
+    depends_on:
+      - jobmanager
+    volumes:
+      - artifacts:/tmp/beam-artifact-staging
+  python-worker-harness:
+    image: example_image:v1.0
+    command: ["/opt/apache/beam/boot", "--worker_pool"]
+    depends_on:
+      - taskmanager
+    ports:
+      - "50000:50000"
+    volumes:
+      - artifacts:/tmp/beam-artifact-staging
+    environment:
+      - RUN_BEAM_LOCALLY=1
+volumes:
+    artifacts:
