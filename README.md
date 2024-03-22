@@ -22,8 +22,8 @@ In our use cases, the kubernetes is used for production, the docker-compose is f
 
 2. Separate Python Harness SDK Harness to its own container.  It seems hard to control and evaluate the python usage, therefore we decide to separate the python harness so that we can just configure the container resources to control the memory assigned to python code.
 
-# Docker Compose Example 
-1. first start the cluster: 
+# Docker Compose Example
+1. first start the cluster:
 ```
 docker-compose -f docker-compose.yaml up [-d]
 ```
@@ -36,11 +36,21 @@ python example.py \
   --environment_type=EXTERNAL \
   --environment_config=host.docker.internal:50000
 ```
+## Note
+1. The example is tested in a m1 laptop. The issue for docker on mac is that I cannot use `host` and thus have to use the workaround with
+`host.docker.internal` to point to the local machine port.
+To ensure this work properly so that you can submit the job locally, please update `/etc/hosts` with extra line:
+```
+127.0.0.1 host.docker.internal
+```
+2. Also for M1 (or other apple chips), please ensure to enable docker settings `Use Rosetta for x86_64/amd64 emulation on Apple Silicon`
 
-# Kubernetes Example 
+
+
+# Kubernetes Example
 1. Ensure you have installed the [flink operator](https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-release-1.7/docs/try-flink-kubernetes-operator/quick-start/)
 
-2. If you're not using Docker desktop, make sure you build the image and upload the image to the repo that your k8s can access. 
+2. If you're not using Docker desktop, make sure you build the image and upload the image to the repo that your k8s can access.
 ```
 docker build --platform linux/amd64 -t example_image:v1.0 docker/
 ```
@@ -48,4 +58,3 @@ docker build --platform linux/amd64 -t example_image:v1.0 docker/
 ```
 kubectl apply -f k8s.yaml
 ```
- 

@@ -1,4 +1,4 @@
-FROM  ubuntu:20.04
+FROM  --platform=linux/amd64 ubuntu:20.04
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -14,7 +14,7 @@ RUN apt-get update && \
 COPY --from=apache/beam_java8_sdk:2.41.0 /opt/apache/beam/ /opt/apache/beam_java/
 
 # install python SDK
-COPY --from=apache/beam_python3.7_sdk:2.41.0 /opt/apache/beam/ /opt/apache/beam/
+COPY --from=apache/beam_python3.8_sdk:2.41.0 /opt/apache/beam/ /opt/apache/beam/
 
 
 COPY requirements.txt docker-entrypoint.sh install-flink.sh /
