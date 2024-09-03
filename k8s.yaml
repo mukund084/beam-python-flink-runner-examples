@@ -32,10 +32,10 @@ metadata:
   name: example-app
 spec:
   image: example_image:v1.0
-  imagePullPolicy: Always
-  flinkVersion: v1_14
+  imagePullPolicy: IfNotPresent
+  flinkVersion: v1_15
   flinkConfiguration:
-    kubernetes.entry.path: "/shared/docker-entrypoint.sh"
+    kubernetes.entry.path: "/docker-entrypoint.sh"
     taskmanager.numberOfTaskSlots: "4"
     state.backend.fs.checkpointdir: file:///checkpoints/flink/checkpoints
     fs.s3a.aws.credentials.provider: com.amazonaws.auth.WebIdentityTokenCredentialsProvider
@@ -71,7 +71,7 @@ spec:
               value: example-app
         - name: python-worker-harness
           image: example_image:v1.0
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: ['/docker-entrypoint.sh']
           args: ["/opt/apache/beam/boot", "--worker_pool"]
           env:
@@ -120,7 +120,7 @@ spec:
     entryClass: org.apache.beam.runners.flink.FlinkPortableClientEntryPoint
     args:
       - "--driver-cmd"
-      - "python example.py --topic test --group test-group --bootstrap-server host.docker.internal:9092 --job_endpoint host.docker.internal:8099 --artifact_endpoint host.docker.internal:8098 --environment_type=EXTERNAL --environment_config=host.docker.internal:50000"
+      - "python example.py --topic test --group test-group --bootstrap-server host.docker.internal:9092 --environment_type=EXTERNAL --environment_config=localhost:50000"
     parallelism: 4
     upgradeMode: stateless
     state: running

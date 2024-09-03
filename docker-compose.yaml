@@ -1,8 +1,9 @@
 version: '3'
 services:
   jobmanager:
-    build: docker
-    image: example_image:v1.0
+    build:
+      context: docker
+      dockerfile: Dockerfile
     command: ['jobmanager']
     ports:
       - "8081:8081"
@@ -12,7 +13,9 @@ services:
     volumes:
       - artifacts:/tmp/beam-artifact-staging
   taskmanager:
-    image: example_image:v1.0
+    build:
+      context: docker
+      dockerfile: Dockerfile
     scale: 1
     depends_on:
       - jobmanager
@@ -26,10 +29,13 @@ services:
       # instead of `localhost` 2) use ports 8100-8200 in a round-robin fashion.
       BEAM_WORKER_POOL_IN_DOCKER_VM: 1
       DOCKER_MAC_CONTAINER: 1
+      FLINK_LOG_CONF: "logger.kafka.name: org.apache.kafka.clients.consumer.internals\nlogger.kafka.level: WARN"
     volumes:
       - artifacts:/tmp/beam-artifact-staging
   beam-jobserver:
-    image: example_image:v1.0
+    build:
+      context: docker
+      dockerfile: Dockerfile
     entrypoint:
       - java
       - -cp
@@ -46,7 +52,9 @@ services:
     volumes:
       - artifacts:/tmp/beam-artifact-staging
   python-worker-harness:
-    image: example_image:v1.0
+    build:
+      context: docker
+      dockerfile: Dockerfile
     command: ["/opt/apache/beam/boot", "--worker_pool"]
     depends_on:
       - taskmanager

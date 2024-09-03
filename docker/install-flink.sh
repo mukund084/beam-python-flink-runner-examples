@@ -1,22 +1,7 @@
 #!/bin/bash
 echo "installing flink=${FLINK_VERSION} BEAM=${BEAM_VERSION} …"
 
-# Install dependencies
-apt-get update
-apt-get -y install libsnappy1v5 wget
-rm -rf /var/lib/apt/lists/*
-
-# Configure Flink version
-FLINK_TGZ_URL="https://www.apache.org/dyn/closer.cgi?action=download&filename=flink/flink-${FLINK_VERSION}/flink-${FLINK_VERSION}-bin-scala_2.12.tgz"
-
-# Prepare environment
-mkdir -p $FLINK_HOME
-cd $FLINK_HOME
-
-# Install Flink
-wget -nv -O flink.tgz "$FLINK_TGZ_URL"
-tar -xf flink.tgz --strip-components=1
-rm flink.tgz
+set -e
 
 # enable support for S3
 cd $FLINK_HOME
