@@ -14,6 +14,7 @@ RUN rm -rf /var/lib/apt/lists/* && \
         curl && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+
 # install java SDK
 COPY --from=apache/beam_java11_sdk:2.62.0 /opt/apache/beam/ /opt/apache/beam_java/
 
