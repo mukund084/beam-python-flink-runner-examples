@@ -33,7 +33,7 @@ metadata:
 spec:
   image: example_image:v1.0
   imagePullPolicy: IfNotPresent
-  flinkVersion: v1_15
+  flinkVersion: v1_17
   flinkConfiguration:
     kubernetes.entry.path: "/docker-entrypoint.sh"
     taskmanager.numberOfTaskSlots: "4"
@@ -76,7 +76,7 @@ spec:
           args: ["/opt/apache/beam/boot", "--worker_pool"]
           env:
             - name: JAVA_HOME
-              value: /usr/lib/jvm/java-8-openjdk-amd64
+              value: /usr/lib/jvm/java-11-openjdk-amd64
             - name: FLINK_JOB_NAME
               value: example-app
           volumeMounts:
@@ -105,7 +105,7 @@ spec:
           - name: FLINK_HOME
             value: /opt/flink
           - name: JAVA_HOME
-            value: /usr/lib/jvm/java-8-openjdk-amd64
+            value: /usr/lib/jvm/java-11-openjdk-amd64
           - name: FLINK_JOB_NAME
             value: example-app
         volumeMounts:
