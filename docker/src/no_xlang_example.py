@@ -1,8 +1,7 @@
 from __future__ import absolute_import
 
-import argparse
-import logging
 import os
+import re
 import sys
 
 import apache_beam as beam
@@ -19,13 +18,19 @@ def run_pipeline():
     args.extend(sys.argv[1:])
 
     with beam.Pipeline(options=PipelineOptions(args)) as pipeline:
-        print(f"Using args: {args}")
+        lines = pipeline | beam.Create(
+            [
+                "to be or not to be",
+                "that is the question",
+            ]
+        )
         (
-            pipeline
-            | beam.Create(
-                [(0, "ttt"), (0, "ttt1"), (0, "ttt2"), (1, "xxx"), (1, "xxx2"), (2, "yyy")]
-            )
-            | beam.Map(print)
+            lines
+            | "Split" >> beam.FlatMap(lambda line: re.findall(r"[A-Za-z']+", line.lower()))
+            | "PairWithOne" >> beam.Map(lambda word: (word, 1))
+            | "GroupAndSum" >> beam.CombinePerKey(sum)
+            | "Format" >> beam.Map(lambda kv: f"{kv[0]}: {kv[1]}")
+            | "Print" >> beam.Map(print)
         )
 
 

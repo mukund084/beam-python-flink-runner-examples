@@ -1,5 +1,8 @@
 # Beam + Flink Runner (Python Examples)
 
+These examples target Apache Beam 2.62.0 running on Apache Flink 1.17.2 with Python 3.12.
+The sample pipeline counts words from a small in-memory data set and prints the results.
+
 
 There are very few documentation on how to run Apache Beam with Flink Runner, especially for how to configure the setup. As a result, I'd like to provide an example on how we set up our infrastructure.
 
@@ -9,7 +12,7 @@ The example contains 2 approaches:
   please ensure you have the official flink operator installed on your kubernetes cluster in order to run this.
 
 - Docker Compose:
-  please ensure you have docker-compose installed
+  a `docker-compose.yaml` is provided to start a local Flink cluster with the web UI (port 8081) and endpoints for submitting Beam code; please ensure you have docker-compose installed
 
 
 In our use cases, the kubernetes is used for production, the docker-compose is for local testing/development.
@@ -30,7 +33,6 @@ docker-compose -f docker-compose.yaml up [-d]
 2.  Trigger the app
 ```
 python example.py \
-  --topic test --group test-group --bootstrap-server host.docker.internal:9092 \
   --job_endpoint host.docker.internal:8099 \
   --artifact_endpoint host.docker.internal:8098 \
   --environment_type=EXTERNAL \
