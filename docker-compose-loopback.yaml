@@ -1,0 +1,46 @@
+version: '3'
+services:
+  jobmanager:
+    build:
+      context: docker
+      dockerfile: Dockerfile
+    command: ['jobmanager']
+    ports:
+      - "8081:8081"
+    environment:
+      FLINK_PROPERTIES: "jobmanager.rpc.address: jobmanager\nparallelism.default: 1"
+      FLINK_JOB_NAME: 'test'
+    volumes:
+      - artifacts:/tmp/beam-artifact-staging
+  taskmanager:
+    build:
+      context: docker
+      dockerfile: Dockerfile
+    depends_on:
+      - jobmanager
+    command: ['taskmanager']
+    environment:
+      FLINK_PROPERTIES: "jobmanager.rpc.address: jobmanager\ntaskmanager.numberOfTaskSlots: 1\nparallelism.default: 1"
+    volumes:
+      - artifacts:/tmp/beam-artifact-staging
+  beam-jobserver:
+    build:
+      context: docker
+      dockerfile: Dockerfile
+    entrypoint:
+      - java
+      - -cp
+      - /opt/flink/flink-web-upload/beam-runner.jar
+      - org.apache.beam.runners.flink.FlinkJobServerDriver
+      - --flink-master=jobmanager
+      - --job-host=beam-jobserver
+    ports:
+      - "8097:8097"
+      - "8098:8098"
+      - "8099:8099"
+    depends_on:
+      - jobmanager
+    volumes:
+      - artifacts:/tmp/beam-artifact-staging
+volumes:
+  artifacts:
